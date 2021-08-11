@@ -1,5 +1,7 @@
 import pygame
 import random
+import os
+pygame.mixer.init()
 from pygame.constants import KEYDOWN
 pygame.init()
 white = (255, 255, 255)
@@ -9,10 +11,13 @@ screen_width =1200
 screen_height = 500
 font = pygame.font.SysFont(None ,55)
 
-gameWindow = pygame.display.set_mode((screen_width,screen_height))
 
+gameWindow = pygame.display.set_mode((screen_width,screen_height))
+bgimg = pygame.image.load('snake.jpg')
+bgimg = pygame.transform.scale(bgimg,(screen_width,screen_height)).convert_alpha()
 pygame.display.set_caption("sanpon_ki_nagri")
 pygame.display.update()
+clock = pygame.time.Clock()
 def text_score(text,color,x,y):
         screen_text = font.render(text,True,color)
         gameWindow.blit(screen_text,[x,y])
@@ -20,6 +25,24 @@ def plot_snake(gameWindow,color,snk_list,snake_size):
         for x,y in snk_list:
             pygame.draw.rect(gameWindow, color ,[
                         x, y, snake_size, snake_size])
+
+def welcome():
+    exit_game=False
+    while not exit_game:
+        
+        gameWindow.fill(white)
+        text_score("Sapon ki Nagri mai apka Swagat hai",black,300,200)
+        text_score("Press space to continue",red,350,240)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit_game = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    pygame.mixer.music.load('back.mp3')
+                    pygame.mixer.music.play()
+                    gameloop()
+        pygame.display.update()
+        clock.tick(60)
 
 def gameloop():
     snake_x = 45
@@ -38,14 +61,22 @@ def gameloop():
     
     snk_list = []
     snk_length = 1
+    if(not os.path.exists("hiscore.txt")):
+        with open("hiscore.txt","w") as f:
+            f.write("0")
+    with open("hiscore.txt","r") as f:
+        hiscore = f.read()
    
 
    
 
     # game loop
     while not exit_game:
+        
  
         if game_over:
+            with open("hiscore.txt","w") as f:
+                f.write(str(hiscore))
             gameWindow.fill(white)
             text_score("gameover! Press enter to continue",red,300,200)
             for event in pygame.event.get():
@@ -54,9 +85,11 @@ def gameloop():
                     exit_game = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
-                        gameloop()
+                        welcome()
 
         else:
+            
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     exit_game = True
@@ -82,14 +115,18 @@ def gameloop():
 
 
             if abs(snake_x-food_x)<6 and abs(snake_y-food_y)<6:
-                score +=1
+                score +=10
                 # print("score:",score*10)
                 food_x = random.randint(20, 1200/2)
                 food_y = random.randint(20, 500/2)
                 snk_length +=5
+                if score>int(hiscore):
+                    hiscore = score
 
             gameWindow.fill(white)
-            text_score("score:"+str(score*10),red,5,5)
+            gameWindow.blit(bgimg,(0,0))
+
+            text_score("score:"+str(score)+"  hiscore:"+str(hiscore),red,5,5)
             pygame.draw.rect(gameWindow ,red,[food_x, food_y, snake_size,snake_size])
         
             head =[]
@@ -102,11 +139,15 @@ def gameloop():
 
             if head in snk_list[:-1]:
                 game_over = True
+                pygame.mixer.music.load('gameover.mp3')
+                pygame.mixer.music.play()
             
             if snake_x<0 or snake_x>screen_width or snake_y<0 or snake_y>screen_height:
                 game_over =True
+                pygame.mixer.music.load('gameover.mp3')
+                pygame.mixer.music.play()
                 print("gameover")
-            plot_snake(gameWindow,black,snk_list,snake_size) 
+            plot_snake(gameWindow,white,snk_list,snake_size) 
         
        
 
@@ -118,4 +159,5 @@ def gameloop():
     pygame.quit()
     quit()
 
-gameloop()
+# gameloop()
+welcome()
